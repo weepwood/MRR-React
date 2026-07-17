@@ -1,0 +1,9 @@
+import { create } from "zustand"
+import { persist } from "zustand/middleware"
+type Theme = "light" | "dark" | "system"
+interface ThemeState { theme: Theme; setTheme: (theme: Theme) => void }
+export const useThemeStore = create<ThemeState>()(persist((set) => ({ theme: "system", setTheme: (theme) => set({ theme }) }), { name: "MRR-REACT:theme" }))
+export function applyTheme(theme: Theme) {
+  const dark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)
+  document.documentElement.classList.toggle("dark", dark)
+}

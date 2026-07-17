@@ -1,0 +1,5 @@
+import { Button } from "@/components/ui/button"
+export function Pager({ page, size, total, onPageChange, onSizeChange }: { page: number; size: number; total: number; onPageChange: (page: number) => void; onSizeChange?: (size: number) => void }) {
+  const pages = Math.max(1, Math.ceil(total / size))
+  return <div className="flex flex-col gap-3 border-t px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"><span className="text-muted-foreground">共 {total.toLocaleString("zh-CN")} 条，第 {page}/{pages} 页</span><div className="flex items-center gap-2">{onSizeChange && <select className="h-8 rounded-md border bg-background px-2 text-xs" value={size} onChange={(e) => onSizeChange(Number(e.target.value))}>{[20,50,100,200].map(v => <option key={v} value={v}>{v} 条/页</option>)}</select>}<Button size="sm" variant="outline" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>上一页</Button><Button size="sm" variant="outline" disabled={page >= pages} onClick={() => onPageChange(page + 1)}>下一页</Button></div></div>
+}

@@ -1,0 +1,19 @@
+import { useState } from "react"
+import { useMutation, useQuery } from "@tanstack/react-query"
+import { Download, Search, Trash2 } from "lucide-react"
+import { toast } from "sonner"
+import { logsApi } from "@/api/mrr"
+import { EmptyState, ErrorState, LoadingState } from "@/components/shared/data-state"
+import { PageHeader } from "@/components/shared/page-header"
+import { Pager } from "@/components/shared/pager"
+import { QueryCard, QueryField } from "@/components/shared/query-card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { downloadBlob, formatDateTime } from "@/lib/utils"
+export function LogsPage(){
+ const[page,setPage]=useState(1),[size,setSize]=useState(50),[filters,setFilters]=useState({keyword:"",username:"",clientIp:"",method:"",responseStatus:""}),[applied,setApplied]=useState(filters);const query=useQuery({queryKey:["logs",page,size,applied],queryFn:()=>logsApi.system({page,size,...applied})});const cleanup=useMutation({mutationFn:()=>logsApi.cleanup(),onSuccess:()=>{toast.success("日志清理任务已执行");query.refetch()},onError:e=>toast.error(e.message)});async function exportLogs(){downloadBlob(await logsApi.exportRetention(),`mrr-logs-retention-${Date.now()}.zip`)}
+ return <><PageHeader eyebrow="System Logs" title="日志管理" description="检索系统访问日志，查看请求状态、耗时、客户端地址和审计信息。" actions={<><Button variant="outline" onClick={exportLogs}><Download/>导出待清理日志</Button><Button variant="destructive" disabled={cleanup.isPending} onClick={()=>confirm("确认执行日志保留策略清理？")&&cleanup.mutate()}><Trash2/>运行清理</Button></>}/><QueryCard>{(["keyword","username","clientIp"] as const).map(key=><QueryField key={key} label={{keyword:"关键字",username:"用户",clientIp:"客户端 IP"}[key]}><Input value={filters[key]} onChange={e=>setFilters({...filters,[key]:e.target.value})}/></QueryField>)}<QueryField label="请求方法"><select className="h-9 w-full rounded-md border bg-background px-3 text-sm" value={filters.method} onChange={e=>setFilters({...filters,method:e.target.value})}><option value="">全部</option>{["GET","POST","PUT","DELETE"].map(v=><option key={v}>{v}</option>)}</select></QueryField><QueryField label="响应状态"><Input value={filters.responseStatus} onChange={e=>setFilters({...filters,responseStatus:e.target.value})} placeholder="200"/></QueryField><Button onClick={()=>{setApplied(filters);setPage(1)}}><Search/>查询</Button></QueryCard><Card>{query.isLoading?<LoadingState/>:query.error?<ErrorState error={query.error}/>:!query.data?.list.length?<EmptyState/>:<Table><TableHeader><TableRow><TableHead>时间</TableHead><TableHead>用户</TableHead><TableHead>客户端 IP</TableHead><TableHead>方法</TableHead><TableHead>请求地址</TableHead><TableHead>状态</TableHead><TableHead>耗时</TableHead><TableHead>审计动作</TableHead></TableRow></TableHeader><TableBody>{query.data.list.map((row,index)=><TableRow key={row.id||index}><TableCell className="whitespace-nowrap">{formatDateTime(row.accessTime)}</TableCell><TableCell>{row.username||"—"}</TableCell><TableCell className="font-mono text-xs">{row.clientIp||"—"}</TableCell><TableCell><Badge variant="outline">{row.method||"—"}</Badge></TableCell><TableCell className="max-w-80 truncate font-mono text-xs" title={row.requestUri}>{row.requestUri||"—"}</TableCell><TableCell><Badge variant={Number(row.responseStatus)<400?"success":"destructive"}>{row.responseStatus||"—"}</Badge></TableCell><TableCell>{row.executeTime==null?"—":`${row.executeTime} ms`}</TableCell><TableCell>{row.auditAction||"—"}</TableCell></TableRow>)}</TableBody></Table>}<Pager page={page} size={size} total={query.data?.total||0} onPageChange={setPage} onSizeChange={v=>{setSize(v);setPage(1)}}/></Card></>
+}

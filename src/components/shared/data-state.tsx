@@ -1,0 +1,6 @@
+import type { ReactNode } from "react"
+import { AlertCircle, Inbox, LoaderCircle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+export function LoadingState({ label = "正在加载数据…" }: { label?: string }) { return <div className="flex min-h-48 flex-col items-center justify-center gap-3 text-sm text-muted-foreground"><LoaderCircle className="size-6 animate-spin" />{label}</div> }
+export function EmptyState({ title = "暂无数据", description, action }: { title?: string; description?: string; action?: ReactNode }) { return <div className="flex min-h-48 flex-col items-center justify-center gap-2 text-center"><Inbox className="size-8 text-muted-foreground" /><p className="font-medium">{title}</p>{description && <p className="max-w-md text-sm text-muted-foreground">{description}</p>}{action}</div> }
+export function ErrorState({ error, retry }: { error: unknown; retry?: () => void }) { return <div className="flex min-h-48 flex-col items-center justify-center gap-3 text-center"><AlertCircle className="size-8 text-red-500" /><div><p className="font-medium">加载失败</p><p className="mt-1 max-w-lg text-sm text-muted-foreground">{error instanceof Error ? error.message : String(error || "未知错误")}</p></div>{retry && <Button variant="outline" onClick={retry}>重新加载</Button>}</div> }

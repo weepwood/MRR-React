@@ -1,0 +1,18 @@
+import { useState } from "react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { KeyRound, Pencil } from "lucide-react"
+import { toast } from "sonner"
+import { authApi } from "@/api/mrr"
+import { EmptyState, ErrorState, LoadingState } from "@/components/shared/data-state"
+import { PageHeader } from "@/components/shared/page-header"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import type { AuthRole } from "@/types/api"
+export function PermissionsPage(){
+ const qc=useQueryClient(),[current,setCurrent]=useState<AuthRole|null>(null),[form,setForm]=useState({name:"",description:"",permissions:"",sortOrder:0});const roles=useQuery({queryKey:["roles"],queryFn:authApi.roles});const save=useMutation({mutationFn:()=>authApi.updateRole(current!.code!,form),onSuccess:()=>{toast.success("角色权限已更新");setCurrent(null);qc.invalidateQueries({queryKey:["roles"]})},onError:e=>toast.error(e.message)});function edit(role:AuthRole){setCurrent(role);setForm({name:role.name||"",description:role.description||"",permissions:role.permissions||"",sortOrder:role.sortOrder||0})}
+ return <><PageHeader eyebrow="Roles & Permissions" title="权限管理" description="以角色为边界维护权限代码。权限文本保持与后端现有逗号分隔格式兼容。"/>{roles.isLoading?<LoadingState/>:roles.error?<ErrorState error={roles.error}/>:!roles.data?.length?<EmptyState/>:<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{roles.data.map(role=><Card key={role.code}><CardHeader><div className="flex items-start justify-between"><div><CardTitle>{role.name||role.code}</CardTitle><CardDescription className="mt-1">{role.code}</CardDescription></div><Button variant="ghost" size="icon" onClick={()=>edit(role)}><Pencil/></Button></div></CardHeader><CardContent><p className="min-h-10 text-sm text-muted-foreground">{role.description||"暂无描述"}</p><div className="mt-4 flex flex-wrap gap-1.5">{String(role.permissions||"").split(",").map(i=>i.trim()).filter(Boolean).slice(0,12).map(permission=><span key={permission} className="rounded-md bg-muted px-2 py-1 font-mono text-[11px]">{permission}</span>)}</div><div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground"><KeyRound className="size-3.5"/>排序 {role.sortOrder||0}</div></CardContent></Card>)}</div>}<Dialog open={!!current} onOpenChange={open=>!open&&setCurrent(null)}><DialogContent><DialogHeader><DialogTitle>编辑角色</DialogTitle><DialogDescription>{current?.code}</DialogDescription></DialogHeader><div className="space-y-4"><div className="space-y-2"><Label>角色名称</Label><Input value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></div><div className="space-y-2"><Label>描述</Label><Input value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/></div><div className="space-y-2"><Label>权限代码</Label><Textarea className="min-h-40 font-mono text-xs" value={form.permissions} onChange={e=>setForm({...form,permissions:e.target.value})} placeholder="record:read,statistics:read"/></div><div className="space-y-2"><Label>排序</Label><Input type="number" value={form.sortOrder} onChange={e=>setForm({...form,sortOrder:Number(e.target.value)})}/></div></div><DialogFooter><Button variant="outline" onClick={()=>setCurrent(null)}>取消</Button><Button disabled={save.isPending} onClick={()=>save.mutate()}>保存</Button></DialogFooter></DialogContent></Dialog></>
+}
