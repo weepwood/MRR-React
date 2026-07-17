@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
       host: "0.0.0.0",
       proxy: {
         "/proxy": {
-          target: env.VITE_PROXY_TARGET || "http://127.0.0.1:8080",
+          target: env.VITE_PROXY_TARGET || "http://127.0.0.1:8001",
           changeOrigin: true,
           rewrite: (requestPath) => requestPath.replace(/^\/proxy/, ""),
         },
