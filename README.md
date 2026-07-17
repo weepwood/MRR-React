@@ -38,7 +38,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-开发环境默认将 `/proxy/*` 转发到 `http://127.0.0.1:8080`，可通过 `VITE_PROXY_TARGET` 修改。
+开发环境默认将 `/proxy/*` 转发到 `http://127.0.0.1:8001`，可通过 `VITE_PROXY_TARGET` 修改。
 
 ## 生产构建
 
@@ -58,9 +58,9 @@ VITE_AUTH_ENABLED=false
 
 需要启用路由登录保护时改为 `true`。登录、用户和权限接口仍然完整保留。
 
-## Nginx
+## Windows + Nginx 部署
 
-仓库提供 `deploy/nginx.conf.example`。重点是 SPA 回退：
+项目按 Windows 内网原生部署设计，不使用 Docker。执行 `npm run build` 后，将 `dist/` 内容复制到 `D:/MRR-Pub/frontend`。仓库提供可放入 `conf/conf.d/mrr-react.conf` 的 `deploy/nginx.conf.example`。重点是 SPA 回退：
 
 ```nginx
 location / {
