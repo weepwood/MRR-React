@@ -1,26 +1,36 @@
 # MRR React
 
-MRR 病案文件管理系统的 React 前端重构版本。
+MRR 病案文件管理系统的新 React 管理端。项目以 `weepwood/MRR` 的 `frontend-fantastic-admin` 为迁移基线，保留原有 Spring Boot API、主要页面 URL 和业务数据结构，前端技术栈完全改为 React。
 
-本项目使用 React、TypeScript、Vite、React Router、TanStack Query/Table 与 shadcn/ui 组件组织方式，继续对接 `weepwood/MRR` 的 Spring Boot API。
+## 技术栈
 
-## 功能范围
+- React 19 + TypeScript
+- Vite 7
+- React Router 7
+- TanStack Query / TanStack Table
+- shadcn/ui 组件组织方式 + Radix UI
+- Tailwind CSS 4
+- Recharts
+- Zustand
+- Axios
+
+## 已迁移页面
 
 - 工作台
-- 扫描记录管理
+- 记录管理
 - 患者管理
-- 病案扫描统计与明细
-- 影像档案袋
+- 病案扫描统计 / 统计明细
+- 影像档案袋（独立页与内嵌页）
 - 档案装箱
 - OSS 迁移管理
-- 用户与权限管理
-- 日志和图片访问审计
-- 系统监控与公开状态页
-- 接口响应分析
+- 用户管理 / 权限管理
 - 系统设置
-- 帮助文档
+- 日志管理 / 图片访问审计
+- 系统监控 / 服务状态
+- 接口响应分析
+- 帮助与文档
 
-## 本地运行
+## 本地开发
 
 ```bash
 npm install
@@ -28,62 +38,38 @@ cp .env.example .env.local
 npm run dev
 ```
 
-默认开发地址：`http://localhost:5173`。
+开发环境默认将 `/proxy/*` 转发到 `http://127.0.0.1:8080`，可通过 `VITE_PROXY_TARGET` 修改。
 
-## 环境变量
+## 生产构建
+
+```bash
+npm run build
+```
+
+构建产物位于 `dist/`。同域部署时 `VITE_APP_API_BASEURL` 留空；前后端分离时填入后端 API 地址。
+
+## 认证模式
+
+目标仓库默认对齐 `MRR/dev-no-login`：
 
 ```env
-VITE_API_BASE_URL=/proxy/
-VITE_PROXY_TARGET=http://127.0.0.1:8001
 VITE_AUTH_ENABLED=false
 ```
 
-- `VITE_API_BASE_URL`：生产环境 API 基础路径。
-- `VITE_PROXY_TARGET`：Vite 开发代理目标。
-- `VITE_AUTH_ENABLED`：是否启用前端登录守卫；与 MRR 当前 `dev-no-login` 分支保持一致，默认关闭。
+需要启用路由登录保护时改为 `true`。登录、用户和权限接口仍然完整保留。
 
-## 构建
+## Nginx
 
-```bash
-npm run build
-npm run preview
+仓库提供 `deploy/nginx.conf.example`。重点是 SPA 回退：
+
+```nginx
+location / {
+  try_files $uri $uri/ /index.html;
+}
 ```
 
-构建产物位于 `dist/`。
+后端接口可继续通过同域 `/api/` 反向代理。
 
-## Windows + Nginx 部署
+## 迁移边界
 
-```bash
-npm ci
-npm run build
-```
-
-将 `dist/` 内容复制到 Nginx 站点目录，并参考 `deploy/nginx.conf.example` 配置 SPA 回退与 `/api/` 反向代理。
-
-## 路由兼容
-
-保留原前端主要路由，包括：
-
-- `/records`
-- `/patients`
-- `/statistics`
-- `/statistics-detail`
-- `/archive`
-- `/archive/embed`
-- `/archive-boxes`
-- `/oss-migration`
-- `/users`
-- `/permissions`
-- `/logs`
-- `/audit-images`
-- `/monitoring`
-- `/status`
-- `/response-analysis`
-- `/settings`
-- `/help`
-
-旧 `/idcard` 与 `/idcard/:idCard` 地址会重定向到新的影像档案袋。
-
-## 设计系统
-
-项目采用 shadcn/ui 的源码内组件模式，基础组件位于 `src/components/ui`，业务组件位于 `src/components/shared`。主题使用 CSS 变量管理，并支持浅色、深色和跟随系统。
+本仓库只替换 `frontend-fantastic-admin`，不会修改 MRR 后端数据库结构和 API。部署切换前建议在测试环境依次验证：登录、扫描记录分页、影像搜索、批量下载、统计导出、装箱 CRUD、OSS 任务、用户权限和系统设置。
